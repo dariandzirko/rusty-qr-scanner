@@ -18,6 +18,7 @@ fn make_grayhistrogram(image: &GrayImage) -> GrayHistogram {
         histogram[*pixel.channels().get(0).unwrap() as usize] += 1;
     }
 
+    //Need to fix this
     probabilities
         .iter_mut()
         .enumerate()
