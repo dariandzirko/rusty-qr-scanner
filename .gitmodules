@@ -1,0 +1,3 @@
+[submodule "oxidized-image-processing"]
+	path = oxidized-image-processing
+	url = https://github.com/dariandzirko/oxidized-image-processing

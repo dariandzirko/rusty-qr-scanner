@@ -97,9 +97,9 @@ pub fn otsu(image: &GrayImage) -> GrayImage {
 
     for (col, row, pixel) in image.enumerate_pixels() {
         if *pixel.channels().get(0).unwrap() as usize > otsu_threshold {
-            result.put_pixel(col, row, dark_pixel);
-        } else {
             result.put_pixel(col, row, light_pixel);
+        } else {
+            result.put_pixel(col, row, dark_pixel);
         }
     }
 
