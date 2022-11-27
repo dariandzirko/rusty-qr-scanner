@@ -401,7 +401,7 @@ checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 [[package]]
 name = "oxidized_image_processing"
 version = "0.1.0"
-source = "git+https://github.com/dariandzirko/oxidized-image-processing#86998589d1caef85c36d4eb7c3786efd36dbddae"
+source = "git+https://github.com/dariandzirko/oxidized-image-processing#e34d73f9c36b830e27c63ae25fa9e7f295de106d"
 dependencies = [
  "image",
  "num",

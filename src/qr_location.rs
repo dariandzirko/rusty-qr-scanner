@@ -19,3 +19,16 @@ pub fn box_detector(image: &GrayImage) -> Vec<(usize, usize)> {
 
     return vec![(0, 0)];
 }
+
+pub fn gradient_image(image: &GrayImage) -> Vec<Vec<(f32, f32)>> {
+    let second_der_x_dir = conv_2d(&Kernel::sobel_x_dir(), image);
+    let second_der_y_dir = conv_2d(&Kernel::sobel_y_dir(), image);
+
+    let (cols, rows) = second_der_x_dir.dimensions();
+
+    let result = vec![vec![0.0; cols as usize]; rows as usize];
+
+    return result;
+}
+
+pub fn canny_edge_detector(image: &GrayImage) -> GrayImage {}
