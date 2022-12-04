@@ -45,40 +45,42 @@ pub struct EdgeLine {
     adjacent2: (i32, i32) //second adjancent pixel in the direction of the edge normal
 }
 
+
+//THIS IS ALL FUCKING WRONG OFF BY A FACTOR OF 2
 pub fn normal_to_direction(angle: f32) -> EdgeLine {
     match angle {
         direction
             //-pi/16 .. pi/16
-            if (-std::f32::consts::FRAC_PI_8 / 2.0 .. std::f32::consts::FRAC_PI_8 / 2.0)
+            if (-std::f32::consts::FRAC_PI_8 / 2.0 ..= std::f32::consts::FRAC_PI_8 / 2.0)
                 .contains(&angle) => EdgeLine{name: "vertical_edge".to_owned(), adjacent1: (1, 0), adjacent2: (-1, 0)},
         direction
             //pi/16 .. 3pi/16
-            if (std::f32::consts::FRAC_PI_8 / 2.0 .. std::f32::consts::FRAC_PI_8 / 2.0 * 3.0)
+            if (std::f32::consts::FRAC_PI_8 / 2.0 ..= std::f32::consts::FRAC_PI_8 / 2.0 * 3.0)
                 .contains(&angle) => EdgeLine{name: "neg_45_edge".to_owned(), adjacent1: (1, 1), adjacent2: (-1, 1)},
         direction 
             //3pi/16 .. 5pi/16
-            if (std::f32::consts::FRAC_PI_8 / 2.0 * 3.0 .. std::f32::consts::FRAC_PI_8 / 2.0 * 5.0)
+            if (std::f32::consts::FRAC_PI_8 / 2.0 * 3.0 ..= std::f32::consts::FRAC_PI_8 / 2.0 * 5.0)
                 .contains(&angle) => EdgeLine{name: "horizontal_edge".to_owned(), adjacent1: (0, 1), adjacent2: (0, -1)},
         direction 
             //5pi/16 .. 7pi/16
-            if (std::f32::consts::FRAC_PI_8 / 2.0 * 5.0 .. std::f32::consts::FRAC_PI_8 / 2.0 * 7.0)
+            if (std::f32::consts::FRAC_PI_8 / 2.0 * 5.0 ..= std::f32::consts::FRAC_PI_8 / 2.0 * 7.0)
                 .contains(&angle) => EdgeLine{name: "pos_45_edge".to_owned(), adjacent1: (-1, 1), adjacent2: (1, -1)},
 
         direction
             //7pi/16 .. -7pi/16
-            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 7.0 .. -std::f32::consts::FRAC_PI_8 / 2.0 * 7.0)
+            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 7.0 ..= -std::f32::consts::FRAC_PI_8 / 2.0 * 7.0)
                 .contains(&angle) => EdgeLine{name: "vertical_edge".to_owned(), adjacent1: (1, 0), adjacent2: (-1, 0)},
         direction
             //-7pi/16 .. -5pi/16
-            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 7.0 .. -std::f32::consts::FRAC_PI_8 / 2.0 * 5.0)
+            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 7.0 ..= -std::f32::consts::FRAC_PI_8 / 2.0 * 5.0)
                 .contains(&angle) => EdgeLine{name: "neg_45_edge".to_owned(), adjacent1: (1, 1), adjacent2: (-1, 1)},
         direction 
             //-5pi/16 .. -3pi/16
-            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 5.0 .. -std::f32::consts::FRAC_PI_8 / 2.0 * 3.0)
+            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 5.0 ..= -std::f32::consts::FRAC_PI_8 / 2.0 * 3.0)
                 .contains(&angle) => EdgeLine{name: "horizontal_edge".to_owned(), adjacent1: (0, 1), adjacent2: (0, -1)},
         direction 
             //-3pi/16 .. -pi/16
-            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 3.0 .. -std::f32::consts::FRAC_PI_8 / 2.0)
+            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 3.0 ..= -std::f32::consts::FRAC_PI_8 / 2.0)
                 .contains(&angle) => EdgeLine{name: "pos_45_edge".to_owned(), adjacent1: (-1, 1), adjacent2: (1, -1)},
                 
         _ => EdgeLine{name: "broken".to_owned(), adjacent1: (100, 100), adjacent2: (-100, -100)},
@@ -91,11 +93,17 @@ pub fn non_maxima_suppression(gradient_info: Vec<Vec<(f32, f32)>>) -> GrayImage{
 
     let mut result = GrayImage::new(cols as u32, rows as u32);
 
-    for row in 0..rows {
-        for col in 0..cols {
+    for row in 1..rows {
+        for col in 1..cols {
             let (mag, angle) = gradient_info[col][row];
             let direction = normal_to_direction(angle);
             
+            if direction.name == "broken" {
+                println!("mag: {}, angle:{}", mag, angle);
+                println!("left: {}, right:{}", std::f32::consts::FRAC_PI_8 / 2.0 * 3.0, std::f32::consts::FRAC_PI_8 / 2.0 * 5.0);
+                
+            }
+
             if mag > gradient_info[ (col as i32 + direction.adjacent1.0) as usize][ (row as i32 + direction.adjacent1.1) as usize].0 
             && mag > gradient_info[ (col as i32 + direction.adjacent2.0) as usize][ (row as i32 + direction.adjacent1.1) as usize].0 {
                 let pixel = Luma([mag as u8]);
