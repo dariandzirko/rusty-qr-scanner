@@ -3,13 +3,39 @@ use std::vec;
 use image::{self, GenericImageView, GrayImage, Luma, Pixel};
 use oxidized_image_processing::{conv_2d, Kernel};
 
+#[derive(Default, Clone)]
+pub struct PixelGradientInfo {
+    gx: u8,
+    gy: u8,
+    mag: f32,
+    angle: f32
+}
+
+impl PixelGradientInfo {
+    pub fn new(gx: u8, gy: u8) -> PixelGradientInfo{
+
+        let mut magnitude_gradient =
+        f32::sqrt(f32::powf(gx as f32, 2.0) + f32::powf(gy as f32, 2.0));
+        //Try scaling the mag, this is a lazy solution
+        //magnitude_gradient = magnitude_gradient*255.0/361.0;
+
+        let angle_gradient = (gy as f32).atan2(gx as f32);
+        PixelGradientInfo { gx: gx, gy: gy, mag: magnitude_gradient, angle: angle_gradient }    
+    }
+}
+
+pub struct EdgeLine {
+    name: String, //This will be interpretation of the name of each direction of edges not the name of the normal of the direction
+    adjacent1: (i32, i32), //first adjacent pixel in the direction of the edge normal
+    adjacent2: (i32, i32) //second adjancent pixel in the direction of the edge normal
+}
+
 //Bias here will be promising points that are slightly better than just plain edges
 pub fn finder_mark_location(bias: Vec<(usize, usize)>, image: GrayImage) -> (usize, usize) {
     return (0, 0);
 }
 
-pub fn gradient_image_content(image: &GrayImage) -> Vec<(f32, f32)> {
-    //This is incorrect atm because it does not return the same size image
+pub fn gradient_image_content(image: &GrayImage) -> Vec<PixelGradientInfo> {
     let second_der_x_dir = conv_2d(&Kernel::sobel_x_dir(), image, true);
     let second_der_y_dir = conv_2d(&Kernel::sobel_y_dir(), image, true);
 
@@ -18,7 +44,7 @@ pub fn gradient_image_content(image: &GrayImage) -> Vec<(f32, f32)> {
 
     let (cols, rows) = second_der_x_dir.dimensions();
 
-    let mut result = vec![(0.0, 0.0); (rows * cols) as usize];
+    let mut result = vec![PixelGradientInfo{..Default::default()}; (rows * cols) as usize];
 
     for row in 0..rows {
         for col in 0..cols {
@@ -32,20 +58,11 @@ pub fn gradient_image_content(image: &GrayImage) -> Vec<(f32, f32)> {
                 .channels()
                 .get(0)
                 .unwrap();
-            let magnitude_gradient =
-                f32::sqrt(f32::powf(gx as f32, 2.0) + (f32::powf(gy as f32, 2.0)));
-            let angle_gradient = (gy as f32).atan2(gx as f32);
-            result[(col+(row*rows)) as usize] = (magnitude_gradient, angle_gradient);
+            result[(col+(row*rows)) as usize] = PixelGradientInfo::new(gx, gy);
         }
     }
 
     return result;
-}
-
-pub struct EdgeLine {
-    name: String, //This will be interpretation of the name of each direction of edges not the name of the normal of the direction
-    adjacent1: (i32, i32), //first adjacent pixel in the direction of the edge normal
-    adjacent2: (i32, i32) //second adjancent pixel in the direction of the edge normal
 }
 
 pub fn normal_to_direction(angle: f32) -> EdgeLine {
@@ -57,7 +74,7 @@ pub fn normal_to_direction(angle: f32) -> EdgeLine {
         direction
             //pi/8 .. 3pi/8
             if (std::f32::consts::FRAC_PI_8 ..= std::f32::consts::FRAC_PI_8 * 3.0)
-                .contains(&angle) => EdgeLine{name: "neg_45_edge".to_owned(), adjacent1: (1, 1), adjacent2: (-1, 1)},
+                .contains(&angle) => EdgeLine{name: "neg_45_edge".to_owned(), adjacent1: (1, 1), adjacent2: (-1, -1)},
         direction 
             //3pi/8 .. 5pi/8
             if (std::f32::consts::FRAC_PI_8 * 3.0 ..= std::f32::consts::FRAC_PI_8 * 5.0)
@@ -74,7 +91,7 @@ pub fn normal_to_direction(angle: f32) -> EdgeLine {
         direction
             //-7pi/8 .. -5pi/8
             if (-std::f32::consts::FRAC_PI_8 * 7.0 ..= -std::f32::consts::FRAC_PI_8 * 5.0)
-                .contains(&angle) => EdgeLine{name: "neg_45_edge".to_owned(), adjacent1: (1, 1), adjacent2: (-1, 1)},
+                .contains(&angle) => EdgeLine{name: "neg_45_edge".to_owned(), adjacent1: (1, 1), adjacent2: (-1, -1)},
         direction 
             //-5pi/8 .. -3pi/8
             if (-std::f32::consts::FRAC_PI_8 * 5.0 ..= -std::f32::consts::FRAC_PI_8 * 3.0)
@@ -89,37 +106,42 @@ pub fn normal_to_direction(angle: f32) -> EdgeLine {
 }
 
 //This is certainly wrong 
-pub fn non_maxima_suppression(gradient_info: Vec<(f32, f32)>, cols: u32, rows: u32) -> GrayImage{
+pub fn non_maxima_suppression(gradient_info: Vec<PixelGradientInfo>, cols: u32, rows: u32) -> (GrayImage, GrayImage){
     let mut result = GrayImage::new(cols, rows);
-
+    let mut mag_image = GrayImage::new(cols, rows);
     //I think this is correct, where I ignore the outermost border of pixels
     for row in 1..rows-1 {
         for col in 1..cols-1 {
-            let (mag, angle) = gradient_info[(col+(row*rows)) as usize];
-            let direction = normal_to_direction(angle);
+            let pixel_info = &gradient_info[(col+(row*rows)) as usize];
+            let normal_line = normal_to_direction(pixel_info.angle);
 
-            if mag > gradient_info[ ((col as i32 + direction.adjacent1.0) + (row as i32 + direction.adjacent1.1)*rows as i32) as usize].0 
-            && mag > gradient_info[ ((col as i32 + direction.adjacent2.0) + (row as i32 + direction.adjacent1.1)*rows as i32) as usize].0 {
-                let pixel = Luma([mag as u8]);
+            //println!("row: {}| col: {} | mag: {}| angle: {}| adjacent1: {:?}| adjacent2: {:?}| name: {}", row, col, pixel_info.mag, pixel_info.angle, normal_line.adjacent1, normal_line.adjacent2, normal_line.name);
+
+            if pixel_info.mag > gradient_info[ ((col as i32 + normal_line.adjacent1.0) + (row as i32 + normal_line.adjacent1.1)*rows as i32) as usize].mag
+            && pixel_info.mag > gradient_info[ ((col as i32 + normal_line.adjacent2.0) + (row as i32 + normal_line.adjacent2.1)*rows as i32) as usize].mag {
+                let pixel = Luma([pixel_info.mag as u8]);
                 result.put_pixel(col as u32, row as u32, pixel);
             }
+            let pixel = Luma([pixel_info.mag as u8]);
+            mag_image.put_pixel(col as u32, row as u32, pixel);
         }
     }
 
-    return result;
+    return (result, mag_image);
 }
 
 pub fn canny_edge_detector(image: &GrayImage) -> GrayImage {
     //This is incorrect atm because it does not return the same size image
-    let smoothed_image = conv_2d(&Kernel::gaussian_2d(3.0), image, true);
+    let smoothed_image = conv_2d(&Kernel::gaussian_2d(4.0), image, true);
     smoothed_image.save("smoothed_image.png");
 
     let smoothed_gradient = gradient_image_content(&smoothed_image);
     let (cols, rows) = smoothed_image.dimensions();
 
-    let nom_maxima_suppressed_image = non_maxima_suppression(smoothed_gradient, cols, rows);
+    let (non_maxima_suppressed_image, mag_gradient_image) = non_maxima_suppression(smoothed_gradient, cols, rows);
+    mag_gradient_image.save("mag_gradient_image.png");
 
-    return nom_maxima_suppressed_image;
+    return non_maxima_suppressed_image;
 }
 
 //This will take the result of the above. Maybe will return the vector of biased points that I can use to find the locator marks

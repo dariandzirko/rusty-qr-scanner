@@ -23,9 +23,6 @@ fn make_grayhistrogram(image: &GrayImage) -> GrayHistogram {
         .enumerate()
         .for_each(|(i, x)| *x = *x + (histogram[i] as f32 / sum as f32));
 
-    // println!("histogram: {:?}", histogram);
-    // println!("probabilities: {:?}", probabilities);
-
     GrayHistogram {
         histogram,
         probabilities,
@@ -76,13 +73,6 @@ pub fn otsu_threshold(image: &GrayImage) -> usize {
         }
     }
 
-    //println!("q1: {:?}", probabilities_class1);
-    //println!("m1: {:?}", mean_intensities_class1);
-    //println!("mq: {:?}", global_mean_intensity);
-    //println!("sigmab: {:?}", between_class_var);
-
-    //return max(between_class_var);
-    //return between_class_var.iter().max().unwrap;
     return k_star;
 }
 
