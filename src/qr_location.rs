@@ -8,14 +8,17 @@ pub fn finder_mark_location(bias: Vec<(usize, usize)>, image: GrayImage) -> (usi
     return (0, 0);
 }
 
-pub fn gradient_image_content(image: &GrayImage) -> Vec<Vec<(f32, f32)>> {
+pub fn gradient_image_content(image: &GrayImage) -> Vec<(f32, f32)> {
     //This is incorrect atm because it does not return the same size image
     let second_der_x_dir = conv_2d(&Kernel::sobel_x_dir(), image, true);
     let second_der_y_dir = conv_2d(&Kernel::sobel_y_dir(), image, true);
 
+    second_der_x_dir.save("second_der_x_dir.png");
+    second_der_y_dir.save("second_der_y_dir.png");
+
     let (cols, rows) = second_der_x_dir.dimensions();
 
-    let mut result = vec![vec![(0.0, 0.0); cols as usize]; rows as usize];
+    let mut result = vec![(0.0, 0.0); (rows * cols) as usize];
 
     for row in 0..rows {
         for col in 0..cols {
@@ -32,7 +35,7 @@ pub fn gradient_image_content(image: &GrayImage) -> Vec<Vec<(f32, f32)>> {
             let magnitude_gradient =
                 f32::sqrt(f32::powf(gx as f32, 2.0) + (f32::powf(gy as f32, 2.0)));
             let angle_gradient = (gy as f32).atan2(gx as f32);
-            result[col as usize][row as usize] = (magnitude_gradient, angle_gradient);
+            result[(col+(row*rows)) as usize] = (magnitude_gradient, angle_gradient);
         }
     }
 
@@ -45,8 +48,6 @@ pub struct EdgeLine {
     adjacent2: (i32, i32) //second adjancent pixel in the direction of the edge normal
 }
 
-
-//THIS IS ALL FUCKING WRONG OFF BY A FACTOR OF 2
 pub fn normal_to_direction(angle: f32) -> EdgeLine {
     match angle {
         direction
@@ -87,25 +88,18 @@ pub fn normal_to_direction(angle: f32) -> EdgeLine {
     }
 }
 
-pub fn non_maxima_suppression(gradient_info: Vec<Vec<(f32, f32)>>) -> GrayImage{
-    let rows = gradient_info.len();
-    let cols = gradient_info[0].len();
+//This is certainly wrong 
+pub fn non_maxima_suppression(gradient_info: Vec<(f32, f32)>, cols: u32, rows: u32) -> GrayImage{
+    let mut result = GrayImage::new(cols, rows);
 
-    let mut result = GrayImage::new(cols as u32, rows as u32);
-
-    for row in 1..rows {
-        for col in 1..cols {
-            let (mag, angle) = gradient_info[col][row];
+    //I think this is correct, where I ignore the outermost border of pixels
+    for row in 1..rows-1 {
+        for col in 1..cols-1 {
+            let (mag, angle) = gradient_info[(col+(row*rows)) as usize];
             let direction = normal_to_direction(angle);
-            
-            if direction.name == "broken" {
-                println!("mag: {}, angle:{}", mag, angle);
-                println!("left: {}, right:{}", std::f32::consts::FRAC_PI_8 / 2.0 * 3.0, std::f32::consts::FRAC_PI_8 / 2.0 * 5.0);
-                
-            }
 
-            if mag > gradient_info[ (col as i32 + direction.adjacent1.0) as usize][ (row as i32 + direction.adjacent1.1) as usize].0 
-            && mag > gradient_info[ (col as i32 + direction.adjacent2.0) as usize][ (row as i32 + direction.adjacent1.1) as usize].0 {
+            if mag > gradient_info[ ((col as i32 + direction.adjacent1.0) + (row as i32 + direction.adjacent1.1)*rows as i32) as usize].0 
+            && mag > gradient_info[ ((col as i32 + direction.adjacent2.0) + (row as i32 + direction.adjacent1.1)*rows as i32) as usize].0 {
                 let pixel = Luma([mag as u8]);
                 result.put_pixel(col as u32, row as u32, pixel);
             }
@@ -118,9 +112,12 @@ pub fn non_maxima_suppression(gradient_info: Vec<Vec<(f32, f32)>>) -> GrayImage{
 pub fn canny_edge_detector(image: &GrayImage) -> GrayImage {
     //This is incorrect atm because it does not return the same size image
     let smoothed_image = conv_2d(&Kernel::gaussian_2d(3.0), image, true);
-    let smoothed_gradient = gradient_image_content(&smoothed_image);
+    smoothed_image.save("smoothed_image.png");
 
-    let nom_maxima_suppressed_image = non_maxima_suppression(smoothed_gradient);
+    let smoothed_gradient = gradient_image_content(&smoothed_image);
+    let (cols, rows) = smoothed_image.dimensions();
+
+    let nom_maxima_suppressed_image = non_maxima_suppression(smoothed_gradient, cols, rows);
 
     return nom_maxima_suppressed_image;
 }
