@@ -14,7 +14,7 @@ pub struct PixelGradientInfo {
 impl PixelGradientInfo {
     pub fn new(gx: u8, gy: u8) -> PixelGradientInfo{
 
-        let mut magnitude_gradient =
+        let magnitude_gradient =
         f32::sqrt(f32::powf(gx as f32, 2.0) + f32::powf(gy as f32, 2.0));
         //Try scaling the mag, this is a lazy solution
         //magnitude_gradient = magnitude_gradient*255.0/361.0;

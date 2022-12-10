@@ -1,5 +1,7 @@
 use std::env;
 
+use otsu::otsu;
+
 mod otsu;
 mod qr_location;
 
