@@ -50,37 +50,37 @@ pub struct EdgeLine {
 pub fn normal_to_direction(angle: f32) -> EdgeLine {
     match angle {
         direction
-            //-pi/16 .. pi/16
-            if (-std::f32::consts::FRAC_PI_8 / 2.0 ..= std::f32::consts::FRAC_PI_8 / 2.0)
+            //-pi/8 .. pi/8
+            if (-std::f32::consts::FRAC_PI_8 ..= std::f32::consts::FRAC_PI_8)
                 .contains(&angle) => EdgeLine{name: "vertical_edge".to_owned(), adjacent1: (1, 0), adjacent2: (-1, 0)},
         direction
-            //pi/16 .. 3pi/16
-            if (std::f32::consts::FRAC_PI_8 / 2.0 ..= std::f32::consts::FRAC_PI_8 / 2.0 * 3.0)
+            //pi/8 .. 3pi/8
+            if (std::f32::consts::FRAC_PI_8 ..= std::f32::consts::FRAC_PI_8 * 3.0)
                 .contains(&angle) => EdgeLine{name: "neg_45_edge".to_owned(), adjacent1: (1, 1), adjacent2: (-1, 1)},
         direction 
-            //3pi/16 .. 5pi/16
-            if (std::f32::consts::FRAC_PI_8 / 2.0 * 3.0 ..= std::f32::consts::FRAC_PI_8 / 2.0 * 5.0)
+            //3pi/8 .. 5pi/8
+            if (std::f32::consts::FRAC_PI_8 * 3.0 ..= std::f32::consts::FRAC_PI_8 * 5.0)
                 .contains(&angle) => EdgeLine{name: "horizontal_edge".to_owned(), adjacent1: (0, 1), adjacent2: (0, -1)},
         direction 
-            //5pi/16 .. 7pi/16
-            if (std::f32::consts::FRAC_PI_8 / 2.0 * 5.0 ..= std::f32::consts::FRAC_PI_8 / 2.0 * 7.0)
+            //5pi/8 .. 7pi/8
+            if (std::f32::consts::FRAC_PI_8 * 5.0 ..= std::f32::consts::FRAC_PI_8 * 7.0)
                 .contains(&angle) => EdgeLine{name: "pos_45_edge".to_owned(), adjacent1: (-1, 1), adjacent2: (1, -1)},
 
         direction
-            //7pi/16 .. -7pi/16
-            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 7.0 ..= -std::f32::consts::FRAC_PI_8 / 2.0 * 7.0)
+            //7pi/8 .. -7pi/8
+            if (-std::f32::consts::FRAC_PI_8 * 7.0 ..= -std::f32::consts::FRAC_PI_8 * 7.0)
                 .contains(&angle) => EdgeLine{name: "vertical_edge".to_owned(), adjacent1: (1, 0), adjacent2: (-1, 0)},
         direction
-            //-7pi/16 .. -5pi/16
-            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 7.0 ..= -std::f32::consts::FRAC_PI_8 / 2.0 * 5.0)
+            //-7pi/8 .. -5pi/8
+            if (-std::f32::consts::FRAC_PI_8 * 7.0 ..= -std::f32::consts::FRAC_PI_8 * 5.0)
                 .contains(&angle) => EdgeLine{name: "neg_45_edge".to_owned(), adjacent1: (1, 1), adjacent2: (-1, 1)},
         direction 
-            //-5pi/16 .. -3pi/16
-            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 5.0 ..= -std::f32::consts::FRAC_PI_8 / 2.0 * 3.0)
+            //-5pi/8 .. -3pi/8
+            if (-std::f32::consts::FRAC_PI_8 * 5.0 ..= -std::f32::consts::FRAC_PI_8 * 3.0)
                 .contains(&angle) => EdgeLine{name: "horizontal_edge".to_owned(), adjacent1: (0, 1), adjacent2: (0, -1)},
         direction 
-            //-3pi/16 .. -pi/16
-            if (-std::f32::consts::FRAC_PI_8 / 2.0 * 3.0 ..= -std::f32::consts::FRAC_PI_8 / 2.0)
+            //-3pi/8 .. -pi/8
+            if (-std::f32::consts::FRAC_PI_8 * 3.0 ..= -std::f32::consts::FRAC_PI_8)
                 .contains(&angle) => EdgeLine{name: "pos_45_edge".to_owned(), adjacent1: (-1, 1), adjacent2: (1, -1)},
                 
         _ => EdgeLine{name: "broken".to_owned(), adjacent1: (100, 100), adjacent2: (-100, -100)},
