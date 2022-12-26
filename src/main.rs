@@ -15,7 +15,7 @@ fn main() {
     otsu_img.save("otsu_img.png");
 
     let canny_image = qr_location::canny_edge_detector(&img);
-    canny_image.save("canny_image.png");
+    canny_image.save("double_thresh_image.png");
 
     // let test_vec = qr_location::box_detector(&img);
 }

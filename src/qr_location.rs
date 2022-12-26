@@ -14,7 +14,7 @@ pub struct PixelGradientInfo {
 impl PixelGradientInfo {
     pub fn new(gx: u8, gy: u8) -> PixelGradientInfo{
 
-        let magnitude_gradient =
+        let mut magnitude_gradient =
         f32::sqrt(f32::powf(gx as f32, 2.0) + f32::powf(gy as f32, 2.0));
         //Try scaling the mag, this is a lazy solution
         //magnitude_gradient = magnitude_gradient*255.0/361.0;
@@ -129,6 +129,29 @@ pub fn non_maxima_suppression(gradient_info: Vec<PixelGradientInfo>, cols: u32, 
 
     return (result, mag_image);
 }
+pub fn double_threshhold(image: &GrayImage, low_thresh: u8, high_thresh: u8) -> GrayImage {
+    let (cols, rows) = image.dimensions();
+    let mut result = GrayImage::new(cols, rows);
+
+    let strong_pixel = Luma([255]);
+    let weak_pixel = Luma([25]);        
+
+    for row in 0..rows {
+        for col in 0..cols {
+            
+            let pixel_value = image.get_pixel(col, row).channels().get(0).unwrap();
+
+            if *pixel_value >= high_thresh {
+                result.put_pixel(col, row, strong_pixel);
+            }
+            else if *pixel_value >= low_thresh {
+                result.put_pixel(col, row, weak_pixel);
+            }
+        }
+    }
+
+    result
+}
 
 pub fn canny_edge_detector(image: &GrayImage) -> GrayImage {
     //This is incorrect atm because it does not return the same size image
@@ -140,8 +163,11 @@ pub fn canny_edge_detector(image: &GrayImage) -> GrayImage {
 
     let (non_maxima_suppressed_image, mag_gradient_image) = non_maxima_suppression(smoothed_gradient, cols, rows);
     mag_gradient_image.save("mag_gradient_image.png");
+    non_maxima_suppressed_image.save("non_maxima_img.png");
+    
+    let double_threshed_image = double_threshhold(&non_maxima_suppressed_image, 25, 75);
 
-    return non_maxima_suppressed_image;
+    return double_threshed_image;
 }
 
 //This will take the result of the above. Maybe will return the vector of biased points that I can use to find the locator marks
