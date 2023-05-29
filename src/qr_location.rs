@@ -15,7 +15,7 @@ impl PixelGradientInfo {
     pub fn new(gx: u8, gy: u8) -> PixelGradientInfo{
 
         let mut magnitude_gradient =
-        f32::sqrt(f32::powf(gx as f32, 2.0) + f32::powf(gy as f32, 2.0));
+        f32::sqrt((f32::powf(gx as f32, 2.0) + f32::powf(gy as f32, 2.0)));
         //Try scaling the mag, this is a lazy solution
         //magnitude_gradient = magnitude_gradient*255.0/361.0;
 
@@ -36,35 +36,41 @@ pub fn finder_mark_location(bias: Vec<(usize, usize)>, image: GrayImage) -> (usi
 }
 
 pub fn gradient_image_content(image: &GrayImage) -> Vec<PixelGradientInfo> {
-    let second_der_x_dir = conv_2d(&Kernel::sobel_x_dir(), image, true);
-    let second_der_y_dir = conv_2d(&Kernel::sobel_y_dir(), image, true);
+    let der_x_dir = conv_2d(&Kernel::sobel_x_dir(), image, true);
+    let der_y_dir = conv_2d(&Kernel::sobel_y_dir(), image, true);
 
-    second_der_x_dir.save("second_der_x_dir.png");
-    second_der_y_dir.save("second_der_y_dir.png");
+    der_x_dir.save("der_x_dir.png");
+    der_y_dir.save("der_y_dir.png");
 
-    let (cols, rows) = second_der_x_dir.dimensions();
+    //Using different names because my values are wrong rn
+    let (cols, rows) = der_x_dir.dimensions();
 
-    let mut result = vec![PixelGradientInfo{..Default::default()}; (rows * cols) as usize];
+    let mut result = vec![PixelGradientInfo{..Default::default()}; (cols * rows) as usize];
 
     for row in 0..rows {
         for col in 0..cols {
-            let gx = *second_der_x_dir
+            let gx = *der_x_dir
                 .get_pixel(col, row)
                 .channels()
                 .get(0)
                 .unwrap();
-            let gy = *second_der_y_dir
+            let gy = *der_y_dir
                 .get_pixel(col, row)
                 .channels()
                 .get(0)
                 .unwrap();
-            result[(col+(row*rows)) as usize] = PixelGradientInfo::new(gx, gy);
+            println!("col: {col} y: {row} width: {cols} index: {}",((row*cols)+col));
+
+            let index = (row*cols)+col;
+            result[index as usize] = PixelGradientInfo::new(gx, gy);
         }
     }
 
     return result;
 }
 
+//There might be an easier match statement to use here/ Maybe some sort of enum based match statement. Damn I really
+//don't know because it is matching ranges of angles
 pub fn normal_to_direction(angle: f32) -> EdgeLine {
     match angle {
         direction
@@ -109,16 +115,19 @@ pub fn normal_to_direction(angle: f32) -> EdgeLine {
 pub fn non_maxima_suppression(gradient_info: Vec<PixelGradientInfo>, cols: u32, rows: u32) -> (GrayImage, GrayImage){
     let mut result = GrayImage::new(cols, rows);
     let mut mag_image = GrayImage::new(cols, rows);
+
+    let mut max = 0;
+
     //I think this is correct, where I ignore the outermost border of pixels
     for row in 1..rows-1 {
         for col in 1..cols-1 {
-            let pixel_info = &gradient_info[(col+(row*rows)) as usize];
+            let pixel_info = &gradient_info[(col+(row*cols)) as usize];
             let normal_line = normal_to_direction(pixel_info.angle);
 
             //println!("row: {}| col: {} | mag: {}| angle: {}| adjacent1: {:?}| adjacent2: {:?}| name: {}", row, col, pixel_info.mag, pixel_info.angle, normal_line.adjacent1, normal_line.adjacent2, normal_line.name);
 
-            if pixel_info.mag > gradient_info[ ((col as i32 + normal_line.adjacent1.0) + (row as i32 + normal_line.adjacent1.1)*rows as i32) as usize].mag
-            && pixel_info.mag > gradient_info[ ((col as i32 + normal_line.adjacent2.0) + (row as i32 + normal_line.adjacent2.1)*rows as i32) as usize].mag {
+            if pixel_info.mag > gradient_info[ ((col as i32 + normal_line.adjacent1.0) + (row as i32 + normal_line.adjacent1.1)*cols as i32) as usize].mag
+            && pixel_info.mag > gradient_info[ ((col as i32 + normal_line.adjacent2.0) + (row as i32 + normal_line.adjacent2.1)*cols as i32) as usize].mag {
                 let pixel = Luma([pixel_info.mag as u8]);
                 result.put_pixel(col as u32, row as u32, pixel);
             }
