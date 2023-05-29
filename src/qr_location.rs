@@ -59,7 +59,7 @@ pub fn gradient_image_content(image: &GrayImage) -> Vec<PixelGradientInfo> {
                 .channels()
                 .get(0)
                 .unwrap();
-            println!("col: {col} y: {row} width: {cols} index: {}",((row*cols)+col));
+            //println!("col: {col} y: {row} width: {cols} index: {}",((row*cols)+col));
 
             let index = (row*cols)+col;
             result[index as usize] = PixelGradientInfo::new(gx, gy);
