@@ -29,8 +29,8 @@ Starting with this ![image](https://github.com/dariandzirko/rusty-qr-scanner/src
 
 I was able to make the following images.
 
-Starting with magnitude information of the gradient image of that initial plane, which looks like ![this](https://github.com/dariandzirko/rusty-qr-scanner/demo/mag_gradient_image.png)
+Starting with magnitude information of the gradient image of that initial plane, which looks like ![this](https://github.com/dariandzirko/rusty-qr-scanner/blob/main/demo/mag_gradient_image.png)
 
-In another attempt to help find QR codes which should be in the forefront was using Otsu ![this](https://github.com/dariandzirko/rusty-qr-scanner/demo/otsu_img.png)
+In another attempt to help find QR codes which should be in the forefront was using Otsu ![this](https://github.com/dariandzirko/rusty-qr-scanner/blob/main/demo/otsu_img.png)
 
-Lastly using the gradient image information, I was able to work through perpendicular line estimates for a lot of the content in the image, and after a double thresholding to find the "strongest" lines I was left ![this](https://github.com/dariandzirko/rusty-qr-scanner/demo/double_thresh_image.png)
+Lastly using the gradient image information, I was able to work through perpendicular line estimates for a lot of the content in the image, and after a double thresholding to find the "strongest" lines I was left ![this](https://github.com/dariandzirko/rusty-qr-scanner/blob/main/demo/double_thresh_image.png)
