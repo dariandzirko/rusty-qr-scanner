@@ -16,21 +16,19 @@ I will talk to how both projects are working in tandem as I eventually ended up 
 
 - [x] Magnitude of Gradient 
 - [X] Otsu
-- [X] Non-maxima surpression for finding important lines
+- [X] Non-maxima surpression with Double Thresholding
 - [ ] Canny Edge Detector
 - [ ] Box Detector
 - [ ] Image to QR code
 - [ ] QR Decoder
 
-## Proof of Functionality
+## What's Working and How
 ---
 
-Starting with this ![image](https://github.com/dariandzirko/rusty-qr-scanner/src/images/Plane.jpg)
+Starting with this ![image](https://github.com/dariandzirko/rusty-qr-scanner/blob/main/src/images/Plane.jpg). I was able to make the following pretty cool images.
 
-I was able to make the following images.
+Starting with convolving (my own custom convolution from my own ![oxidized image processing library](https://github.com/dariandzirko/oxidized-image-processing)) the original image and a Sobel derivative filter in each direction. With the X and Y derivatives it is just "square square, square root" for magnitude and atan2(Dy/Dx) for angle. Now I have the gradient information for each pixel of the original image, and by displaying just the magnitude information I get ![this](https://github.com/dariandzirko/rusty-qr-scanner/blob/main/demo/mag_gradient_image.png).
 
-Starting with magnitude information of the gradient image of that initial plane, which looks like ![this](https://github.com/dariandzirko/rusty-qr-scanner/blob/main/demo/mag_gradient_image.png)
+With the angle information and a nice switch statement I can determine the direction of edge lines. The angle content tells us the direction that pixels are changing. Meaning if the angle is pi/2 then the pixels are changing in the y/vertical direction, meaning it is a x/horizontal edge. I classified 4 edges, as -pi/2 and pi/2 would still be a horizontal edge. Now I have a bunch of ideas of lines, that can even be directly next to eachother if there is a multi-pixel edge. Now time for non-maxima suppression implemented where I picked the largest gradient magnitude of adjacent pixels in the value based on edge type. For example a horizontal edge, check the pixel above and below it (the direction of pixel value change) to make sure it is the strongest of edge out of nearby potential horizontal edges. Now with all the local maxima lines left, I use a double threshold on the remaining gradient values, highlighting the most prominent edges while keeping the lower value edges and removing the least prominent edges. Resulting in this ![image](https://github.com/dariandzirko/rusty-qr-scanner/blob/main/demo/double_thresh_image.png)
 
-In another attempt to help find QR codes which should be in the forefront was using Otsu ![this](https://github.com/dariandzirko/rusty-qr-scanner/blob/main/demo/otsu_img.png)
-
-Lastly using the gradient image information, I was able to work through perpendicular line estimates for a lot of the content in the image, and after a double thresholding to find the "strongest" lines I was left ![this](https://github.com/dariandzirko/rusty-qr-scanner/blob/main/demo/double_thresh_image.png)
+The Otsu functionality just seemed useful and fun to try interweaving it, which may help find the more prominent features. More specifically when it can to QR codes, find the outline of the QR code. Based on the original image, applying Otsu leads to ![this](https://github.com/dariandzirko/rusty-qr-scanner/blob/main/demo/otsu_img.png)
