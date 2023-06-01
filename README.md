@@ -20,8 +20,12 @@ The goal of this repo is to build a QR code scanner and test the functionality I
 ## What's Working and How
 ---
 
+<div align="center">
+
 #### Base image: 
 ![base](https://github.com/dariandzirko/rusty-qr-scanner/blob/main/src/images/Plane.jpg)
+
+</div>
 
 Starting with the base image I made the following pretty cool images.
 
